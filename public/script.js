@@ -3,9 +3,6 @@ const sortSelect = document.getElementById('sortBy');
 const container = document.getElementById('players-container');
 const cards = Array.from(container.children);
 
-const modal = document.getElementById('playerModal');
-const modalContent = document.getElementById('modalPlayerData');
-const closeBtn = document.querySelector('.close');
 
 // Filtrar por estado
 filterSelect.addEventListener('change', () => {
