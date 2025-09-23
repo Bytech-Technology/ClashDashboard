@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Clan Dashboard</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+
+<body>
+    <header>
+        <div class="clan-header">
+            <img src="<%= clanInfo.badgeUrls.medium %>" alt="Clan Logo" class="clan-logo">
+            <div class="clan-details">
+                <h1><%= clanInfo.name %></h1>
+                <p class="clan-info">Nivel: <%= clanInfo.clanLevel %> | Miembros: <%= clanInfo.members %>/50 | Puntos: <%= clanInfo.clanPoints %></p>
+            </div>
+        </div>
+    </header>
+
+    <div class="filters">
+        <label>Filtrar por estado:</label>
+        <select id="estadoFilter">
+            <option value="all">Todos</option>
+            <option value="activos">Activos</option>
+            <option value="advertencia">Advertencia</option>
+            <option value="expulsion">Expulsión</option>
+        </select>
+
+        <label>Ordenar por:</label>
+        <select id="sortBy">
+            <option value="none">Original</option>
+            <option value="nombre">Nombre</option>
+            <option value="donaciones">Donaciones</option>
+            <option value="trofeos">Trofeos</option>
+            <option value="xp">XP</option>
+        </select>
+    </div>
+
+
+    <main id="players-container">
+        <% players.forEach(player=> { %>
+            <div class="player-card <%= player.estado.toLowerCase() %>" 
+                data-id="<%= player.id %>" 
+                data-nombre="<%= player.nombre.toLowerCase() %>"
+                data-donaciones="<%= player.donaciones %>"
+                data-trofeos="<%= player.trofeos %>"
+                data-xp="<%= player.xp %>" 
+                data-estado="<%= player.estado.toLowerCase() %>
+            ">
+
+                <!-- Header: nombre + liga -->
+                <div class="player-header">
+                    <div class="name-league">
+                        <h2><%= player.nombre %></h2>
+                        <% if(player.leagueIcon){ %>
+                            <img src="<%= player.leagueIcon %>" alt="<%= player.leagueName %>">
+                        <% } %>
+                    </div>
+                    <span class="id-player"><%= player.id %></span>
+                    <p class="subtitle 
+                        <% if (player.clanRank=== 1) { %> top-1 
+                        <% } else if (player.clanRank === 2) { %> top-2 
+                        <% } else if (player.clanRank === 3) { %> top-3 <% } %>">
+
+                        <span class="role-<%= player.role.toLowerCase() %>"><%= player.role %></span> | <%= player.clanRank %>
+                    </p>
+                </div>
+
+                <!-- Stats -->
+                <div class="player-stats">
+                    <p>TH: <%= player.nivel %></p>
+                    <p>Trofeos: <%= player.trofeos %> | Versus: <%= player.versusTrophies %></p>
+                    <p>XP: <%= player.xp %></p>
+                    <p>Donaciones: <%= player.donaciones %> / Recibidas: <%= player.donacionesRecibidas %></p>
+
+                    <!-- Barras de progreso -->
+                    <div class="progress-bar">
+                        <% const donacionesWidth = Math.min(player.donaciones, 500) / 5; %>
+                        <div class="fill" style="width: <%= donacionesWidth %>%;"></div>
+                    </div>
+                    <div class="progress-bar trophies">
+                        <% const trofeosWidth = Math.min(player.trofeos, 5000) / 50; %>
+                        <div class="fill" style="width: <%= trofeosWidth %>%;"></div>
+                    </div>
+
+                    <p class="player-estado">Estado: <%= player.estado %></p>
+                </div>
+            </div>
+        <% }) %>
+    </main>
+    
+    <script src="/script.js"></script>
+</body>
+
+</html>

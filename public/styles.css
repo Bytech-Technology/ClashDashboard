@@ -1,0 +1,318 @@
+/* ===== Reset y base ===== */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-image: 
+        linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), /* capa oscura */
+        url("/background.jpg"); /* imagen de fondo */
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-attachment: fixed;
+    color: #f0f0f0;
+    min-height: 100vh;
+}
+
+/* Header con logo + nombre + detalles */
+.clan-header {
+    display: flex;
+    flex-direction: column; /* Logo y texto uno debajo del otro */
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    text-align: center;
+    padding-top: 3rem;
+    margin-bottom: 20px;
+}
+
+.clan-logo {
+    width: 100px;
+    height: 100px;
+    border-radius: 16px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7);
+    border: 3px solid #ffa500; /* resalta el logo */
+    background: #1a1a1a;
+    padding: 5px;
+}
+
+.clan-details h1 {
+    font-size: 2.2rem;
+    margin: 0;
+    font-weight: 700;
+    letter-spacing: 1px;
+    background: linear-gradient(90deg, #ffcc00, #ff8800);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.clan-info {
+    font-size: 1rem;
+    color: #ddd;
+    margin-top: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 6px 14px;
+    border-radius: 8px;
+    box-shadow: inset 0 1px 4px rgba(0,0,0,0.4);
+}
+
+/* ===== Filtros ===== */
+.filters {
+    margin: 25px auto;
+    padding: 15px 25px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap; /* En móvil se acomoda en varias líneas */
+}
+
+.filters label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #ffcc00;
+    margin-right: 6px;
+}
+
+.filters select {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: #1e1e1e;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
+}
+
+.filters select:hover {
+    background: #292929;
+}
+
+.filters select:focus {
+    outline: 1px solid #ff8800;
+    box-shadow: 0 0 6px #ffcc00aa;
+}
+
+/* Opciones */
+.filters option {
+    padding: 12px;
+    font-size: 15px;
+    background: #333;
+    color: #fff;
+}
+
+/* Estilo especial para opción seleccionada */
+.filters option:checked {
+    background-color: #ffcc00; /* naranja */
+    color: #fff;
+    font-weight: 600;
+}
+
+/* ===== Contenedor de cards ===== */
+#players-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 3rem;
+    margin-top: 3rem;
+    margin-bottom: 3rem;
+}
+
+/* ===== Card de jugador ===== */
+.player-card {
+    backdrop-filter: blur(20px);
+    border-radius: 15px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.7);
+    transition: transform 0.3s, box-shadow 0.3s;
+    position: relative;
+    overflow: hidden;
+    min-width: 340px;
+    max-width: 500px;
+}
+.player-card.activos {
+  border-left: 8px solid #4caf50;
+}
+.player-card.advertencia {
+  border-left: 8px solid #ff9800;
+}
+.player-card.expulsion {
+  border-left: 8px solid #f44336;
+}
+
+/* === RANKING TOP 3 === */
+.subtitle.top-1 {
+  color: #53ffdf; /* diamante */
+  font-weight: bold;
+}
+
+.subtitle.top-2 {
+  color: #c0c0c0; /* Plata */
+  font-weight: bold;
+}
+
+.subtitle.top-3 {
+  color: #cd7f32; /* Bronce */
+  font-weight: bold;
+}
+
+/* === ROLES === */
+.role-leader {
+  color: #ff4444; /* Rojo fuerte */
+  font-weight: bold;
+}
+
+.role-coleader {
+  color: #ff8800; /* Naranja */
+  font-weight: bold;
+}
+
+.role-admin {
+  color: #4cafef; /* Azul */
+  font-weight: bold;
+}
+
+.role-member {
+  color: #66bb6a; /* Verde */
+  font-weight: 600;
+}
+
+
+/* Header de la card: nombre + role + imagen */
+/* Nombre y subtítulo (role/rank) */
+.name-league {
+    display: flex;
+    justify-content: space-between;
+    gap: 3px;
+}
+
+.name-league h2 {
+    font-size: 1.3rem;
+    color: #fff;
+}
+
+.subtitle {
+    font-size: 0.9rem;
+    color: #ccc;
+}
+
+/* Imagen de la liga al lado derecho */
+.player-header img {
+    width: 36px;
+    height: 36px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+/* Stats de jugador */
+.player-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.player-stats p {
+    font-size: 0.9rem;
+    color: #ccc;
+    margin: 2px 0;
+}
+
+.player-estado {
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-top: 5px;
+    letter-spacing: 0.5px;
+}
+
+/* Barras de progreso */
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #333;
+    border-radius: 6px;
+    margin: 5px 0;
+    overflow: hidden;
+}
+
+.progress-bar.trophies {
+    height: 6px;
+}
+
+.progress-bar .fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4caf50, #81c784);
+    border-radius: 6px;
+    transition: width 0.3s ease;
+}
+
+
+/* Responsive */
+@media (max-width: 600px) {
+    header h1 {
+        font-size: 1.5rem;
+    }
+
+    #players-container {
+        padding: 20px;
+        gap: 15px;
+    }
+
+    /* En móvil, la imagen se pone debajo del nombre */
+    .player-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .player-header img {
+        margin-top: 5px;
+    }
+}
+
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.8);
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background-color: #1a1a1a;
+  margin: 5% auto;
+  padding: 20px;
+  border-radius: 15px;
+  width: 90%;
+  max-width: 600px;
+  color: #fff;
+  box-shadow: 0 6px 25px rgba(0,0,0,0.7);
+}
+
+.close {
+  color: #fff;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close:hover {
+  color: #ff8800;
+}
