@@ -8,8 +8,8 @@
 body {
     font-family: 'Inter', sans-serif;
     background-image: 
-        linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), /* capa oscura */
-        url("/background.jpg"); /* imagen de fondo */
+        linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+        url("/background.jpg");
     background-repeat: no-repeat;
     background-size: cover;
     background-attachment: fixed;
