@@ -25,7 +25,6 @@ app.get('/', async (req, res) => {
             const leagueName = player.league ? player.league.name : 'Sin liga';
             const leagueIcon = player.league ? player.league.iconUrls.medium : '';
             const warStars = player.warStars || 0;
-            const versusTrophies = player.versusTrophies || 0;
 
             let estado = 'Expulsion';
             if ((donaciones >= 150 || donacionesRecibidas >= 150) && (nivel >= 8 || trofeos >= 1000) && xp >= 50) {
@@ -55,7 +54,6 @@ app.get('/', async (req, res) => {
                 leagueName,
                 leagueIcon,
                 warStars,
-                versusTrophies,
                 estado
             };
         });
