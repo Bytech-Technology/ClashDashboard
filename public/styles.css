@@ -8,8 +8,8 @@
 body {
     font-family: 'Inter', sans-serif;
     background-image: 
-        linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
-        url("/background.jpg");
+        linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)),
+        url("/backgroun_2.jpg");
     background-repeat: no-repeat;
     background-size: cover;
     background-attachment: fixed;
@@ -63,9 +63,7 @@ body {
 .filters {
     margin: 25px auto;
     padding: 15px 25px;
-    background: rgba(255, 255, 255, 0.05);
     border-radius: 12px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.4);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -289,30 +287,95 @@ body {
   top: 0;
   width: 100%;
   height: 100%;
-  overflow: auto;
-  background-color: rgba(0,0,0,0.8);
-  backdrop-filter: blur(4px);
+  overflow-y: auto;
+  background-color: rgba(0,0,0,0.85);
+  backdrop-filter: blur(6px);
 }
 
 .modal-content {
-  background-color: #1a1a1a;
-  margin: 5% auto;
-  padding: 20px;
-  border-radius: 15px;
+  background-color: #222;
+  margin: 3% auto;
+  padding: 25px;
+  border-radius: 20px;
   width: 90%;
-  max-width: 600px;
+  max-width: 800px;
   color: #fff;
-  box-shadow: 0 6px 25px rgba(0,0,0,0.7);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.9);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 .close {
   color: #fff;
   float: right;
-  font-size: 28px;
+  font-size: 30px;
   font-weight: bold;
   cursor: pointer;
+  transition: color 0.2s;
+}
+.close:hover {
+  color: #ffcc00;
 }
 
-.close:hover {
-  color: #ff8800;
+/* HEADER DEL JUGADOR */
+.player-header-modal {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.player-header-modal h2 {
+  font-size: 1.8rem;
+  margin-bottom: 8px;
+  background: linear-gradient(90deg, #ffcc00, #ff6600);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.player-header-modal .league-icon {
+  width: 70px;
+  height: 70px;
+  margin-top: 10px;
+}
+
+/* INFO DE ALDEA */
+.village-info {
+  text-align: center;
+  margin-bottom: 25px;
+  padding: 15px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 12px;
+}
+.village-info p {
+  margin: 5px 0;
+  font-size: 0.95rem;
+}
+
+/* SECCIONES DE CARTAS */
+.heroes-container, .troops-container, .spells-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.hero, .troop, .spell {
+  text-align: center;
+  background: #111;
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  transition: transform 0.2s;
+}
+.hero:hover, .troop:hover, .spell:hover {
+  transform: scale(1.05);
+}
+.hero img, .troop img, .spell img {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 6px;
+}
+.hero p, .troop p, .spell p {
+  font-size: 0.8rem;
 }
