@@ -3,7 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Clan Dashboard</title>
+    <title><%= clanInfo.name %></title>
+    <link rel="shortcut icon" href="<%= clanInfo.badgeUrls.medium %>" type="image/x-icon">
     <link rel="stylesheet" href="/styles.css">
 </head>
 
@@ -46,8 +47,8 @@
                 data-donaciones="<%= player.donaciones %>"
                 data-trofeos="<%= player.trofeos %>"
                 data-xp="<%= player.xp %>" 
-                data-estado="<%= player.estado.toLowerCase() %>
-            ">
+                data-estado="<%= player.estado.toLowerCase() %>"
+            >
 
                 <!-- Header: nombre + liga -->
                 <div class="player-header">
