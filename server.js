@@ -21,7 +21,6 @@ app.get('/', async (req, res) => {
             const nivel = player.townHallLevel;
             const xp = player.expLevel;
             const trofeos = player.trophies;
-            const role = player.role;
             const clanRank = player.clanRank;
             const leagueName = player.league ? player.league.name : 'Sin liga';
             const leagueIcon = player.league ? player.league.iconUrls.medium : '';
@@ -34,6 +33,14 @@ app.get('/', async (req, res) => {
             } else if ((donaciones >= 100 || donacionesRecibidas >= 100) && (nivel >= 6 || trofeos >= 500) && xp >= 30) {
                 estado = 'Advertencia';
             }
+             
+            const roleMap = {
+                admin: 'Veterano',
+                coLeader: 'Colider',
+                leader: 'Lider'
+            };
+
+            let role = roleMap[player.role] || 'miembro';
 
             return {
                 id:player.tag,
