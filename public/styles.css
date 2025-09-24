@@ -167,22 +167,22 @@ body {
 }
 
 /* === ROLES === */
-.role-leader {
+.role-lider {
   color: #ff4444; /* Rojo fuerte */
   font-weight: bold;
 }
 
-.role-coleader {
+.role-colider {
   color: #ff8800; /* Naranja */
   font-weight: bold;
 }
 
-.role-admin {
+.role-veterano {
   color: #4cafef; /* Azul */
   font-weight: bold;
 }
 
-.role-member {
+.role-miembro {
   color: #66bb6a; /* Verde */
   font-weight: 600;
 }
