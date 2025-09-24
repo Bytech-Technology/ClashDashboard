@@ -36,6 +36,7 @@ app.get('/', async (req, res) => {
             }
 
             return {
+                id:player.tag,
                 nombre: player.name,
                 nivel,
                 donaciones,
