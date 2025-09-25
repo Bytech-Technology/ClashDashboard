@@ -4,6 +4,25 @@ const container = document.getElementById('players-container');
 const cards = Array.from(container.children);
 
 
+// Modal de login admin
+const loginModal = document.getElementById("adminLoginModal");
+const openLoginBtn = document.getElementById("openAdminLogin");
+const closeLoginBtn = document.getElementById("closeAdminLogin");
+
+openLoginBtn.addEventListener("click", () => {
+  loginModal.style.display = "block";
+});
+
+closeLoginBtn.addEventListener("click", () => {
+  loginModal.style.display = "none";
+});
+
+window.addEventListener("click", (e) => {
+  if (e.target === loginModal) {
+    loginModal.style.display = "none";
+  }
+});
+
 // Filtrar por estado
 filterSelect.addEventListener('change', () => {
   const value = filterSelect.value.toLowerCase();
