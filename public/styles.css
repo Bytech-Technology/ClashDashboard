@@ -114,6 +114,21 @@ body {
     font-weight: 600;
 }
 
+.btn-admin {
+  display: inline-block;
+  padding: 10px 20px;
+  background: #ff8800;
+  color: #fff;
+  border-radius: 8px;
+  font-weight: bold;
+  text-decoration: none;
+  transition: 0.3s;
+}
+.btn-admin:hover {
+  background: #ffcc00;
+  color: #000;
+}
+
 /* ===== Contenedor de cards ===== */
 #players-container {
     display: flex;
