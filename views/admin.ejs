@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Panel Admin - Comparación Semanal</title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        .diff-positive {
+            color: #4caf50;
+            font-weight: bold;
+        }
+
+        /* verde */
+        .diff-negative {
+            color: #f44336;
+            font-weight: bold;
+        }
+
+        /* rojo */
+        .diff-zero {
+            color: #ccc;
+            font-style: italic;
+        }
+
+        /* sin cambio */
+        ul {
+            list-style: none;
+            padding: 0;
+            margin-top: 10px;
+        }
+
+        ul li {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+        }
+
+        ul li strong,
+        ul li span {
+            display: inline-flex;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="clan-header">
+        <h1>Comparación de jugadores</h1>
+        <p class="clan-info">Archivos: <%= oldFile %> → <%= newFile %>
+        </p>
+    </header>
+
+    <main id="players-container">
+        <% if (differences.length===0) { %>
+            <p style="text-align:center; margin-top:20px; font-size:1.2rem;">
+                ✅ No hubo cambios entre snapshots.
+            </p>
+            <% } else { %>
+                <% differences.forEach(diff=> { %>
+                    <div class="player-card">
+                        <h2>
+                            <%= diff.nombre %>
+                        </h2>
+                        <ul>
+                            <% for (let campo in diff.cambios) { const cambio=diff.cambios[campo]; const
+                                diffVal=cambio.diff; let diffClass=diffVal> 0 ? "diff-positive" : (diffVal < 0
+                                    ? "diff-negative" : "diff-zero" ); %>
+                                    <li>
+                                        <span><strong>
+                                                <%= campo %>
+                                            </strong>:</span>
+                                        <span>
+                                            <%= cambio.antes %> → <%= cambio.ahora %>
+                                        </span>
+                                        <span class="<%= diffClass %>">
+                                            (<%= diffVal> 0 ? "+" + diffVal : diffVal %>)
+                                        </span>
+                                    </li>
+                                    <% } %>
+                        </ul>
+                    </div>
+                    <% }) %>
+                        <% } %>
+    </main>
+</body>
+
+</html>
