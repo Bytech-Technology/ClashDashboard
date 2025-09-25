@@ -38,6 +38,9 @@
         </select>
     </div>
 
+    <div style="text-align:center; margin:20px;">
+        <button id="openAdminLogin" class="btn-admin">Panel Admin</button>
+    </div>
 
     <main id="players-container">
         <% players.forEach(player=> { %>
@@ -91,6 +94,19 @@
         <% }) %>
     </main>
     
+    <!-- Modal Login -->
+    <div id="adminLoginModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeAdminLogin">&times;</span>
+            <h2>🔑 Acceso Administrador</h2>
+            <form method="POST" action="/login">
+                <input type="password" name="key" placeholder="Ingrese la clave" required 
+                        style="padding:10px; width:100%; margin:15px 0; border:none; border-radius:8px;">
+                <button type="submit" class="btn-admin">Entrar</button>
+            </form>
+        </div>
+    </div>
+
     <script src="/script.js"></script>
 </body>
 
