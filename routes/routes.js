@@ -79,8 +79,8 @@ function requireAdmin(req, res, next) {
     if (req.session.isAdmin) return next(); 
     if (key && key === process.env.ADMIN_KEY){
         req.session.isAdmin = true;
+        return next();
     }
-    return next();
 
     const err = new Error("Clave de administrador incorecta o no proveida")
     err.status = 403;
