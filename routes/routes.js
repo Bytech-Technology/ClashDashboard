@@ -90,11 +90,24 @@ function requireAdmin(req, res, next) {
 // Función para cargar últimos snapshots
 function loadSnapshots() {
     const files = fs.readdirSync(SNAPSHOT_DIR).filter(f => f.endsWith('.json'));
-    if (files.length < 2) return []; 
-    files.sort((a, b) => {
-        return fs.statSync(path.join(SNAPSHOT_DIR, b)).mtime - fs.statSync(path.join(SNAPSHOT_DIR, a)).mtime;
-    });
-    return files.slice(0, 2);
+    if (files.length < 2) return [];
+
+    // Extraer fecha del nombre: viernes_D_M_AAAA.json
+    const filesWithDate = files.map(f => {
+        const match = f.match(/viernes_(\d+)_(\d+)_(\d+)\.json/);
+        if (!match) return null;
+        const [ , day, month, year ] = match.map(Number);
+        return {
+            filename: f,
+            date: new Date(year, month - 1, day)
+        };
+    }).filter(Boolean);
+
+    // Ordenar por fecha descendente
+    filesWithDate.sort((a, b) => b.date - a.date);
+
+    // Retornar solo los nombres de archivo
+    return filesWithDate.slice(0, 2).map(f => f.filename);
 }
 
 // --- VERIFICACIÓN AL INICIAR PARA SNAPSHOT DEL VIERNES ---
