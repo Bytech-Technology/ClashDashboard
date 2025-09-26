@@ -1,5 +1,5 @@
 const express = require('express');
-const routes = express();
+const routes = express.Router();
 const path = require('path');
 const fs = require('fs');
 const cron = require('node-cron');
@@ -55,10 +55,36 @@ function compareSnapshots(oldSnap, newSnap) {
     return diffs;
 }
 
+// Función que maneja la lógica de /admin
+async function renderAdmin(req, res, next) {
+    try {
+        const files = loadSnapshots();
+        if (files.length < 2) return res.send("⚠️ No hay suficientes snapshots para comparar.");
+
+        const [newFile, oldFile] = files;
+        const newSnap = JSON.parse(fs.readFileSync(path.join(SNAPSHOT_DIR, newFile)));
+        const oldSnap = JSON.parse(fs.readFileSync(path.join(SNAPSHOT_DIR, oldFile)));
+        const differences = compareSnapshots(oldSnap, newSnap);
+
+        res.render('admin', { differences, newFile, oldFile });
+    } catch (err) {
+        next(err);
+    }
+}
+
 // Middleware para admin
 function requireAdmin(req, res, next) {
-  if (req.session.isAdmin) return next();
-  res.redirect('/login');
+    const key = req.body.key || req.query.key;
+
+    if (req.session.isAdmin) return next(); 
+    if (key && key === process.env.ADMIN_KEY){
+        req.session.isAdmin = true;
+    }
+    return next();
+
+    const err = new Error("Clave de administrador incorecta o no proveida")
+    err.status = 403;
+    return next(err);
 }
 
 // Función para cargar últimos snapshots
@@ -140,36 +166,9 @@ routes.get('/', async (req, res, next) => {
     }
 });
 
-routes.get('/login', (req, res) => {
-  res.render('login', { error: null });
-});
 
-routes.post('/login', express.urlencoded({ extended: true }), (req, res) => {
-  const { key } = req.body;
-  if (key === process.env.ADMIN_KEY) {
-    req.session.isAdmin = true;
-    return res.redirect('/admin');
-  }
-  res.send("<script>alert('Clave incorrecta'); window.location.href='/'</script>");
-});
-
-routes.get('/admin', requireAdmin, (req, res, next) => {
-    try {
-        const files = loadSnapshots();
-        if (files.length < 2) {
-            return res.send("⚠️ No hay suficientes snapshots para comparar.");
-        }
-
-        const [newFile, oldFile] = files;
-        const newSnap = JSON.parse(fs.readFileSync(path.join(SNAPSHOT_DIR, newFile)));
-        const oldSnap = JSON.parse(fs.readFileSync(path.join(SNAPSHOT_DIR, oldFile)));
-        const differences = compareSnapshots(oldSnap, newSnap);
-
-        res.render('admin', { differences, newFile, oldFile });
-    } catch (err) {
-        next(err);
-    }
-});
+// Unificar rutas GET y POST usando la misma función
+routes.all('/admin', express.urlencoded({ extended: true }), requireAdmin, renderAdmin);
 
 routes.get('/make-test-snapshots', async (req, res, next) => {
   try {
