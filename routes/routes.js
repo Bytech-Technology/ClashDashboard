@@ -14,16 +14,31 @@ if (!fs.existsSync(SNAPSHOT_DIR)) fs.mkdirSync(SNAPSHOT_DIR);
 async function saveWeeklySnapshot(fakeDate = null) {
     try {
         const members = await getClanMembers(process.env.CLAN_TAG);
-        const players = members.map(p => ({
-            id: p.tag,
-            nombre: p.name,
-            donaciones: p.donations,
-            donacionesRecibidas: p.donationsReceived,
-            trofeos: p.trophies,
-            xp: p.expLevel,
-            nivel: p.townHallLevel,
-            warStars: p.warStars || 0
-        }));
+        const players = members.map(p => {
+            const donaciones = p.donations;
+            const donacionesRecibidas = p.donationsReceived;
+            const nivel = p.townHallLevel;
+            const xp = p.expLevel;
+            const trofeos = p.trophies;
+
+            let estado = 'Expulsion';
+            if ((donaciones >= 150 || donacionesRecibidas >= 150) && (nivel >= 8 || trofeos >= 1000) && xp >= 50) {
+                estado = 'activos';
+            } else if ((donaciones >= 100 || donacionesRecibidas >= 100) && (nivel >= 6 || trofeos >= 500) && xp >= 30) {
+                estado = 'Advertencia';
+            }
+
+            return {
+                id: p.tag,
+                nombre: p.name,
+                donaciones,
+                donacionesRecibidas,
+                trofeos,
+                xp,
+                nivel,
+                estado
+            };
+        });
 
         const date = fakeDate || new Date();
         const filename = `viernes_${date.getDate()}_${date.getMonth()+1}_${date.getFullYear()}.json`;
@@ -38,17 +53,31 @@ async function saveWeeklySnapshot(fakeDate = null) {
 // Función para comparar snapshots
 function compareSnapshots(oldSnap, newSnap) {
     const diffs = [];
+    const ranking = { "Expulsion": 0, "Advertencia": 1, "activos": 2 };
+
     for (let player of newSnap) {
         const prev = oldSnap.find(p => p.id === player.id);
         if (prev) {
             let cambios = {};
-            ["donaciones", "donacionesRecibidas", "trofeos", "xp", "nivel", "warStars"].forEach(field => {
+            ["donaciones", "donacionesRecibidas", "trofeos", "xp", "nivel"].forEach(field => {
                 if (player[field] !== prev[field]) {
                     cambios[field] = { antes: prev[field], ahora: player[field], diff: player[field] - prev[field] };
                 }
             });
+
+            
+            let tendencia = "Igual";
+            if (player.estado !== prev.estado) {
+                cambios.estado = { antes: prev.estado, ahora: player.estado };
+                if ( ranking[player.estado] > ranking[prev.estado]){
+                    tendencia = "Mejoro";
+                }else if ( ranking[player.estado] < ranking[prev.estado]){
+                    tendencia = "Empeoro"
+                }
+            }
+
             if (Object.keys(cambios).length > 0) {
-                diffs.push({ id: player.id, nombre: player.nombre, cambios });
+                diffs.push({ id: player.id, nombre: player.nombre, cambios, tendencia });
             }
         }
     }
@@ -142,7 +171,7 @@ routes.get('/', async (req, res, next) => {
             const warStars = player.warStars || 0;
 
             let estado = 'Expulsion';
-            if ((donaciones >= 150 || donacionesRecibidas >= 150) && (nivel >= 8 || trofeos >= 1000) && xp >= 50) {
+            if ((donaciones >= 150 || donacionesRecibidas >= 150) && (nivel >= 8 || trofeos >= 1500) && xp >= 50) {
                 estado = 'activos';
             } else if ((donaciones >= 100 || donacionesRecibidas >= 100) && (nivel >= 6 || trofeos >= 500) && xp >= 30) {
                 estado = 'Advertencia';
