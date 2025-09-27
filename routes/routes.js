@@ -3,12 +3,37 @@ const routes = express.Router();
 const path = require('path');
 const fs = require('fs');
 const cron = require('node-cron');
+const crypto = require('crypto');
 require('dotenv').config();
 const { getClanMembers, getClanInfo } = require('../api');
 
 // Carpeta donde se guardan los snapshots
 const SNAPSHOT_DIR = path.join(__dirname, 'snapshots');
 if (!fs.existsSync(SNAPSHOT_DIR)) fs.mkdirSync(SNAPSHOT_DIR);
+
+
+// Configuración de encriptación
+const ALGORITHM = 'aes-256-ctr';
+const SECRET_KEY = Buffer.from(process.env.SNAPSHOT_KEY, 'hex');
+const IV_LENGTH = 16;
+
+// Función para encriptar
+function encrypt(value) {
+    const iv = crypto.randomBytes(IV_LENGTH);
+    const cipher = crypto.createCipheriv(ALGORITHM, SECRET_KEY, iv);
+    const encrypted = Buffer.concat([cipher.update(String(value)), cipher.final()]);
+    return iv.toString('hex') + ':' + encrypted.toString('hex');
+}
+
+// Función para desencriptar
+function decrypt(value) {
+    const [ivHex, dataHex] = value.split(':');
+    const iv = Buffer.from(ivHex, 'hex');
+    const encryptedText = Buffer.from(dataHex, 'hex');
+    const decipher = crypto.createDecipheriv(ALGORITHM, SECRET_KEY, iv);
+    const decrypted = Buffer.concat([decipher.update(encryptedText), decipher.final()]);
+    return decrypted.toString();
+}
 
 // Función para guardar snapshot
 async function saveWeeklySnapshot(fakeDate = null) {
@@ -29,14 +54,14 @@ async function saveWeeklySnapshot(fakeDate = null) {
             }
 
             return {
-                id: p.tag,
-                nombre: p.name,
-                donaciones,
-                donacionesRecibidas,
-                trofeos,
-                xp,
-                nivel,
-                estado
+                id: encrypt(p.tag),
+                nombre: encrypt(p.name),
+                donaciones : encrypt(donaciones),
+                donacionesRecibidas: encrypt(donacionesRecibidas),
+                trofeos: encrypt(trofeos),
+                xp: encrypt(xp),
+                nivel: encrypt(nivel),
+                estado: encrypt(estado)
             };
         });
 
@@ -56,28 +81,50 @@ function compareSnapshots(oldSnap, newSnap) {
     const ranking = { "Expulsion": 0, "Advertencia": 1, "activos": 2 };
 
     for (let player of newSnap) {
-        const prev = oldSnap.find(p => p.id === player.id);
-        if (prev) {
+        // desencriptar datos
+        const playerDec = {
+            id: decrypt(player.id),
+            nombre: decrypt(player.nombre),
+            donaciones: Number(decrypt(player.donaciones)),
+            donacionesRecibidas: Number(decrypt(player.donacionesRecibidas)),
+            trofeos: Number(decrypt(player.trofeos)),
+            xp: Number(decrypt(player.xp)),
+            nivel: Number(decrypt(player.nivel)),
+            estado: decrypt(player.estado)
+        }
+        const prevEnc = oldSnap.find(p => decrypt(p.id) === playerDec.id);
+        if (prevEnc) {
+            const prev ={
+                id: decrypt(prevEnc.id),
+                nombre: decrypt(prevEnc.nombre),
+                donaciones: Number(decrypt(prevEnc.donaciones)),
+                donacionesRecibidas: Number(decrypt(prevEnc.donacionesRecibidas)),
+                trofeos: Number(decrypt(prevEnc.trofeos)),
+                xp: Number(decrypt(prevEnc.xp)),
+                nivel: Number(decrypt(prevEnc.nivel)),
+                estado: decrypt(prevEnc.estado)
+            }
+
             let cambios = {};
             ["donaciones", "donacionesRecibidas", "trofeos", "xp", "nivel"].forEach(field => {
-                if (player[field] !== prev[field]) {
-                    cambios[field] = { antes: prev[field], ahora: player[field], diff: player[field] - prev[field] };
+                if (playerDec[field] !== prev[field]) {
+                    cambios[field] = { antes: prev[field], ahora: playerDec[field], diff: playerDec[field] - prev[field] };
                 }
             });
 
             
             let tendencia = "Igual";
-            if (player.estado !== prev.estado) {
-                cambios.estado = { antes: prev.estado, ahora: player.estado };
-                if ( ranking[player.estado] > ranking[prev.estado]){
+            if (playerDec.estado !== prev.estado) {
+                cambios.estado = { antes: prev.estado, ahora: playerDec.estado };
+                if ( ranking[playerDec.estado] > ranking[prev.estado]){
                     tendencia = "Mejoro";
-                }else if ( ranking[player.estado] < ranking[prev.estado]){
+                }else if ( ranking[playerDec.estado] < ranking[prev.estado]){
                     tendencia = "Empeoro"
                 }
             }
 
             if (Object.keys(cambios).length > 0) {
-                diffs.push({ id: player.id, nombre: player.nombre, cambios, tendencia });
+                diffs.push({ id: playerDec.id, nombre: playerDec.nombre, cambios, tendencia });
             }
         }
     }
