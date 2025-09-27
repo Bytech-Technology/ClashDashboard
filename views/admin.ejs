@@ -56,6 +56,17 @@
             <% differences.forEach(diff=> { %>
                 <div class="player-card">
                     <h2><%= diff.nombre %></h2>
+                    <% if (diff.tendencia) { %>
+                        <p>
+                            <% if (diff.tendencia === "Mejoro") { %>
+                                <span class="diff-positive">Mejoro</span>
+                            <% } else if (diff.tendencia === "Empeoro") { %>
+                                <span class="diff-negative">Empeoro</span>
+                            <% } else { %>
+                                <span class="diff-zero">Igual</span>
+                            <% } %>
+                        </p>
+                    <% } %>
                     <ul>
                         <% for (let campo in diff.cambios) { const cambio=diff.cambios[campo]; const diffVal=cambio.diff; let diffClass=diffVal> 0 ? "diff-positive" : (diffVal < 0 ? "diff-negative" : "diff-zero" ); %>
                             <li>
