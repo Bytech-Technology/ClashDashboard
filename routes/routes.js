@@ -27,6 +27,9 @@ function encrypt(value) {
 
 // Función para desencriptar
 function decrypt(value) {
+    if (!value || typeof value !== "string" || !value.includes(":")) {
+        return ""; // o null, para que no rompa
+    }
     const [ivHex, dataHex] = value.split(':');
     const iv = Buffer.from(ivHex, 'hex');
     const encryptedText = Buffer.from(dataHex, 'hex');
@@ -47,9 +50,9 @@ async function saveWeeklySnapshot(fakeDate = null) {
             const trofeos = p.trophies;
 
             let estado = 'Expulsion';
-            if ((donaciones >= 150 || donacionesRecibidas >= 150) && (nivel >= 8 || trofeos >= 1000) && xp >= 50) {
+            if ((donaciones >= 150 || donacionesRecibidas >= 150) && (nivel >= 8 || trofeos >= 1000)) {
                 estado = 'activos';
-            } else if ((donaciones >= 100 || donacionesRecibidas >= 100) && (nivel >= 6 || trofeos >= 500) && xp >= 30) {
+            } else if ((donaciones >= 100 || donacionesRecibidas >= 100) && (nivel >= 6 || trofeos >= 500)) {
                 estado = 'Advertencia';
             }
 
@@ -218,9 +221,9 @@ routes.get('/', async (req, res, next) => {
             const warStars = player.warStars || 0;
 
             let estado = 'Expulsion';
-            if ((donaciones >= 150 || donacionesRecibidas >= 150) && (nivel >= 8 || trofeos >= 1500) && xp >= 50) {
+            if ((donaciones >= 150 || donacionesRecibidas >= 150) && (nivel >= 8 || trofeos >= 1500)) {
                 estado = 'activos';
-            } else if ((donaciones >= 100 || donacionesRecibidas >= 100) && (nivel >= 6 || trofeos >= 500) && xp >= 30) {
+            } else if ((donaciones >= 100 || donacionesRecibidas >= 100) && (nivel >= 6 || trofeos >= 500)) {
                 estado = 'Advertencia';
             }
              
