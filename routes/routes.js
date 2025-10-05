@@ -42,6 +42,21 @@ function decrypt(value) {
 async function saveWeeklySnapshot(fakeDate = null) {
     try {
         const members = await getClanMembers(process.env.CLAN_TAG);
+
+        const files = fs.readdirSync(SNAPSHOT_DIR).filter(f => f.endsWith('.json'));
+        let prevSnap = [];
+        if (files.length > 0) {
+            const filesWithDate = files.map(f => {
+                const match = f.match(/viernes_(\d+)_(\d+)_(\d+)\.json/);
+                if(!match) return null;
+                const [, day, month, year] = match.map(Number);
+                return {filename: f, date: new Date(year, month -1, day) };
+            }).filter(Boolean);
+            filesWithDate.sort((a, b) => b.date - a.date);
+            const lastFile = filesWithDate[0].filename;
+            prevSnap = JSON.parce(fs.readFileSync(path.join(SNAPSHOT_DIR, lastFile)));
+        }
+
         const players = members.map(p => {
             const donaciones = p.donations;
             const donacionesRecibidas = p.donationsReceived;
@@ -49,11 +64,24 @@ async function saveWeeklySnapshot(fakeDate = null) {
             const xp = p.expLevel;
             const trofeos = p.trophies;
 
+            const prevEnvc = prevSnap.find(pp => decrypt(pp.id) === p.tag);
+            let prevAdventCount = prevEnvc ? Number(decrypt(prevEnvc.advertCount || encrypt("0"))): 0;
+
             let estado = 'Expulsion';
             if ((donaciones >= 150 || donacionesRecibidas >= 150) && (nivel >= 8 || trofeos >= 1000)) {
                 estado = 'activos';
             } else if ((donaciones >= 100 || donacionesRecibidas >= 100) && (nivel >= 6 || trofeos >= 500)) {
                 estado = 'Advertencia';
+            }
+
+            let advertCount = prevAdventCount;
+            if (estado === "Advertencia"){
+                advertCount++
+            } else {
+                advertCount = 0;
+            }
+            if (advertCount >= 2) {
+                estado = "Expulsion"
             }
 
             return {
@@ -64,7 +92,8 @@ async function saveWeeklySnapshot(fakeDate = null) {
                 trofeos: encrypt(trofeos),
                 xp: encrypt(xp),
                 nivel: encrypt(nivel),
-                estado: encrypt(estado)
+                estado: encrypt(estado),
+                advertCount: encrypt(advertCount)
             };
         });
 
@@ -105,7 +134,8 @@ function compareSnapshots(oldSnap, newSnap) {
                 trofeos: Number(decrypt(prevEnc.trofeos)),
                 xp: Number(decrypt(prevEnc.xp)),
                 nivel: Number(decrypt(prevEnc.nivel)),
-                estado: decrypt(prevEnc.estado)
+                estado: decrypt(prevEnc.estado),
+                advertCount: prevEnc.advertCount ? Number(decrypt(prevEnc.advertCount)) : 0
             }
 
             let cambios = {};
