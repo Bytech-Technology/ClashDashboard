@@ -1,262 +1,33 @@
 const express = require('express');
 const routes = express.Router();
-const path = require('path');
-const fs = require('fs');
-const cron = require('node-cron');
-const crypto = require('crypto');
 require('dotenv').config();
 const { getClanMembers, getClanInfo } = require('../api');
 
-// Carpeta donde se guardan los snapshots
-const SNAPSHOT_DIR = path.join(__dirname, 'snapshots');
-if (!fs.existsSync(SNAPSHOT_DIR)) fs.mkdirSync(SNAPSHOT_DIR);
-
-
-// Configuración de encriptación
-const ALGORITHM = 'aes-256-ctr';
-const SECRET_KEY = Buffer.from(process.env.SNAPSHOT_KEY, 'hex');
-const IV_LENGTH = 16;
-
-// Función para encriptar
-function encrypt(value) {
-    const iv = crypto.randomBytes(IV_LENGTH);
-    const cipher = crypto.createCipheriv(ALGORITHM, SECRET_KEY, iv);
-    const encrypted = Buffer.concat([cipher.update(String(value)), cipher.final()]);
-    return iv.toString('hex') + ':' + encrypted.toString('hex');
-}
-
-// Función para desencriptar
-function decrypt(value) {
-    if (!value || typeof value !== "string" || !value.includes(":")) {
-        return ""; // o null, para que no rompa
-    }
-    const [ivHex, dataHex] = value.split(':');
-    const iv = Buffer.from(ivHex, 'hex');
-    const encryptedText = Buffer.from(dataHex, 'hex');
-    const decipher = crypto.createDecipheriv(ALGORITHM, SECRET_KEY, iv);
-    const decrypted = Buffer.concat([decipher.update(encryptedText), decipher.final()]);
-    return decrypted.toString();
-}
-
-// Función para guardar snapshot
-async function saveWeeklySnapshot(fakeDate = null) {
-    try {
-        const members = await getClanMembers(process.env.CLAN_TAG);
-
-        const files = fs.readdirSync(SNAPSHOT_DIR).filter(f => f.endsWith('.json'));
-        let prevSnap = [];
-        if (files.length > 0) {
-            const filesWithDate = files.map(f => {
-                const match = f.match(/viernes_(\d+)_(\d+)_(\d+)\.json/);
-                if(!match) return null;
-                const [, day, month, year] = match.map(Number);
-                return {filename: f, date: new Date(year, month -1, day) };
-            }).filter(Boolean);
-            filesWithDate.sort((a, b) => b.date - a.date);
-            const lastFile = filesWithDate[0].filename;
-            prevSnap = JSON.parce(fs.readFileSync(path.join(SNAPSHOT_DIR, lastFile)));
-        }
-
-        const players = members.map(p => {
-            const donaciones = p.donations;
-            const donacionesRecibidas = p.donationsReceived;
-            const nivel = p.townHallLevel;
-            const xp = p.expLevel;
-            const trofeos = p.trophies;
-
-            const prevEnvc = prevSnap.find(pp => decrypt(pp.id) === p.tag);
-            let prevAdventCount = prevEnvc ? Number(decrypt(prevEnvc.advertCount || encrypt("0"))): 0;
-
-            let estado = 'Expulsion';
-            if ((donaciones >= 150 || donacionesRecibidas >= 150) && (nivel >= 8 || trofeos >= 1000)) {
-                estado = 'activos';
-            } else if ((donaciones >= 100 || donacionesRecibidas >= 100) && (nivel >= 6 || trofeos >= 500)) {
-                estado = 'Advertencia';
-            }
-
-            let advertCount = prevAdventCount;
-            if (estado === "Advertencia"){
-                advertCount++
-            } else {
-                advertCount = 0;
-            }
-            if (advertCount >= 2) {
-                estado = "Expulsion"
-            }
-
-            return {
-                id: encrypt(p.tag),
-                nombre: encrypt(p.name),
-                donaciones : encrypt(donaciones),
-                donacionesRecibidas: encrypt(donacionesRecibidas),
-                trofeos: encrypt(trofeos),
-                xp: encrypt(xp),
-                nivel: encrypt(nivel),
-                estado: encrypt(estado),
-                advertCount: encrypt(advertCount)
-            };
-        });
-
-        const date = fakeDate || new Date();
-        const filename = `viernes_${date.getDate()}_${date.getMonth()+1}_${date.getFullYear()}.json`;
-        fs.writeFileSync(path.join(SNAPSHOT_DIR, filename), JSON.stringify(players, null, 2));
-
-        console.log("✅ Snapshot guardado:", filename);
-    } catch (err) {
-        throw new Error("Error guardando snapshot: " + err.message);
-    }
-}
-
-// Función para comparar snapshots
-function compareSnapshots(oldSnap, newSnap) {
-    const diffs = [];
-    const ranking = { "Expulsion": 0, "Advertencia": 1, "activos": 2 };
-
-    for (let player of newSnap) {
-        // desencriptar datos
-        const playerDec = {
-            id: decrypt(player.id),
-            nombre: decrypt(player.nombre),
-            donaciones: Number(decrypt(player.donaciones)),
-            donacionesRecibidas: Number(decrypt(player.donacionesRecibidas)),
-            trofeos: Number(decrypt(player.trofeos)),
-            xp: Number(decrypt(player.xp)),
-            nivel: Number(decrypt(player.nivel)),
-            estado: decrypt(player.estado)
-        }
-        const prevEnc = oldSnap.find(p => decrypt(p.id) === playerDec.id);
-        if (prevEnc) {
-            const prev ={
-                id: decrypt(prevEnc.id),
-                nombre: decrypt(prevEnc.nombre),
-                donaciones: Number(decrypt(prevEnc.donaciones)),
-                donacionesRecibidas: Number(decrypt(prevEnc.donacionesRecibidas)),
-                trofeos: Number(decrypt(prevEnc.trofeos)),
-                xp: Number(decrypt(prevEnc.xp)),
-                nivel: Number(decrypt(prevEnc.nivel)),
-                estado: decrypt(prevEnc.estado),
-                advertCount: prevEnc.advertCount ? Number(decrypt(prevEnc.advertCount)) : 0
-            }
-
-            let cambios = {};
-            ["donaciones", "donacionesRecibidas", "trofeos", "xp", "nivel"].forEach(field => {
-                if (playerDec[field] !== prev[field]) {
-                    cambios[field] = { antes: prev[field], ahora: playerDec[field], diff: playerDec[field] - prev[field] };
-                }
-            });
-
-            
-            let tendencia = "Igual";
-            if (playerDec.estado !== prev.estado) {
-                cambios.estado = { antes: prev.estado, ahora: playerDec.estado };
-                if ( ranking[playerDec.estado] > ranking[prev.estado]){
-                    tendencia = "Mejoro";
-                }else if ( ranking[playerDec.estado] < ranking[prev.estado]){
-                    tendencia = "Empeoro"
-                }
-            }
-
-            if (Object.keys(cambios).length > 0) {
-                diffs.push({ id: playerDec.id, nombre: playerDec.nombre, cambios, tendencia });
-            }
-        }
-    }
-    return diffs;
-}
-
-// Función que maneja la lógica de /admin
-async function renderAdmin(req, res, next) {
-    try {
-        const files = loadSnapshots();
-        if (files.length < 2) return res.send("⚠️ No hay suficientes snapshots para comparar.");
-
-        const [newFile, oldFile] = files;
-        const newSnap = JSON.parse(fs.readFileSync(path.join(SNAPSHOT_DIR, newFile)));
-        const oldSnap = JSON.parse(fs.readFileSync(path.join(SNAPSHOT_DIR, oldFile)));
-        const differences = compareSnapshots(oldSnap, newSnap);
-
-        res.render('admin', { differences, newFile, oldFile });
-    } catch (err) {
-        next(err);
-    }
-}
-
-// Middleware para admin
-function requireAdmin(req, res, next) {
-    const key = req.body.key || req.query.key;
-
-    if (req.session.isAdmin) return next(); 
-    if (key && key === process.env.ADMIN_KEY){
-        req.session.isAdmin = true;
-        return next();
-    }
-
-    const err = new Error("Clave de administrador incorecta o no proveida")
-    err.status = 403;
-    return next(err);
-}
-
-// Función para cargar últimos snapshots
-function loadSnapshots() {
-    const files = fs.readdirSync(SNAPSHOT_DIR).filter(f => f.endsWith('.json'));
-    if (files.length < 2) return [];
-
-    // Extraer fecha del nombre: viernes_D_M_AAAA.json
-    const filesWithDate = files.map(f => {
-        const match = f.match(/viernes_(\d+)_(\d+)_(\d+)\.json/);
-        if (!match) return null;
-        const [ , day, month, year ] = match.map(Number);
-        return {
-            filename: f,
-            date: new Date(year, month - 1, day)
-        };
-    }).filter(Boolean);
-
-    // Ordenar por fecha descendente
-    filesWithDate.sort((a, b) => b.date - a.date);
-
-    // Retornar solo los nombres de archivo
-    return filesWithDate.slice(0, 2).map(f => f.filename);
-}
-
-// --- VERIFICACIÓN AL INICIAR PARA SNAPSHOT DEL VIERNES ---
-const today = new Date();
-const filename = `viernes_${today.getDate()}_${today.getMonth()+1}_${today.getFullYear()}.json`;
-const filePath = path.join(SNAPSHOT_DIR, filename);
-
-if (today.getDay() === 5 && !fs.existsSync(filePath)) {
-    console.log("⚡ Generando snapshot de hoy automáticamente al iniciar...");
-    saveWeeklySnapshot(today).catch(err => console.error(err.message));
-}
-
-// Cron normal para todos los viernes a la 00:00
-cron.schedule('0 0 * * 5', () => saveWeeklySnapshot().catch(err => console.error(err.message)));
-
-// --- RUTAS ---
-
+// Ruta principal: muestra la info del clan y los jugadores
 routes.get('/', async (req, res, next) => {
     try {
         const clanInfo = await getClanInfo(process.env.CLAN_TAG);
         const members = await getClanMembers(process.env.CLAN_TAG);
 
         const players = members.map(player => {
-            const donaciones = player.donations;
-            const donacionesRecibidas = player.donationsReceived;
-            const nivel = player.townHallLevel;
-            const xp = player.expLevel;
-            const trofeos = player.trophies;
+            const donaciones = player.donations || 0;
+            const donacionesRecibidas = player.donationsReceived || 0;
+            const nivel = player.townHallLevel || 0;
+            const xp = player.expLevel || 0;
+            const trofeos = player.trophies || 0;
             const clanRank = player.clanRank;
-            const leagueName = player.league ? player.league.name : 'Sin liga';
-            const leagueIcon = player.league ? player.league.iconUrls.medium : '';
+            const leagueName = player.leagueTier ? player.leagueTier.name : 'Sin liga';
+            const leagueIcon = player.leagueTier ? player.leagueTier.iconUrls.large : '';
             const warStars = player.warStars || 0;
 
             let estado = 'Expulsion';
-            if ((donaciones >= 150 || donacionesRecibidas >= 150) && (nivel >= 8 || trofeos >= 1500)) {
-                estado = 'activos';
-            } else if ((donaciones >= 100 || donacionesRecibidas >= 100) && (nivel >= 6 || trofeos >= 500)) {
+
+            if ((donaciones >= 150 || donacionesRecibidas >= 150) && nivel >= 8) {
+                estado = 'Activos';
+            } else if ((donaciones >= 100 || donacionesRecibidas >= 100) && nivel >= 6) {
                 estado = 'Advertencia';
             }
-             
+
             const roleMap = {
                 admin: 'Veterano',
                 coLeader: 'Colider',
@@ -266,7 +37,7 @@ routes.get('/', async (req, res, next) => {
             let role = roleMap[player.role] || 'miembro';
 
             return {
-                id:player.tag,
+                id: player.tag,
                 nombre: player.name,
                 nivel,
                 donaciones,
@@ -288,40 +59,21 @@ routes.get('/', async (req, res, next) => {
     }
 });
 
-
-// Unificar rutas GET y POST usando la misma función
-routes.all('/admin', express.urlencoded({ extended: true }), requireAdmin, renderAdmin);
-
-routes.get('/make-test-snapshots', async (req, res, next) => {
-  try {
-    const d1 = new Date(2025, 0, 17);
-    const d2 = new Date(2025, 0, 24);
-    await saveWeeklySnapshot(d1);
-    await saveWeeklySnapshot(d2);
-    res.send("✅ Se generaron 2 snapshots de prueba.");
-  } catch (err) {
-    next(err); // pasa al middleware de error
-  }
-});
-
-
-// --- MIDDLEWARES DE ERROR ---
-
-// 404
+// Manejo de errores 404
 routes.use((req, res) => {
-  res.status(404).render('error', { 
-    message: 'Página no encontrada', 
-    redirectTo: '/' 
-  });
+    res.status(404).render('error', {
+        message: 'Página no encontrada',
+        redirectTo: '/'
+    });
 });
 
-// Otros errores (500, etc.)
+// Manejo de errores generales
 routes.use((err, req, res, next) => {
-  console.error("⚠️ Error detectado:", err);
-  res.status(500).render('error', { 
-    message: err.message || 'Error interno del servidor', 
-    redirectTo: '/' 
-  });
+    console.error("⚠️ Error detectado:", err);
+    res.status(500).render('error', {
+        message: err.message || 'Error interno del servidor',
+        redirectTo: '/'
+    });
 });
 
 module.exports = routes;
