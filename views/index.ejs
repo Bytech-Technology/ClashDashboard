@@ -38,10 +38,6 @@
         </select>
     </div>
 
-    <div style="text-align:center; margin:20px;">
-        <button id="openAdminLogin" class="btn-admin">Panel Admin</button>
-    </div>
-
     <main id="players-container">
         <% players.forEach(player=> { %>
             <div class="player-card <%= player.estado.toLowerCase() %>" 
@@ -83,10 +79,6 @@
                         <% const donacionesWidth = Math.min(player.donaciones, 500) / 5; %>
                         <div class="fill" style="width: <%= donacionesWidth %>%;"></div>
                     </div>
-                    <div class="progress-bar trophies">
-                        <% const trofeosWidth = Math.min(player.trofeos, 5000) / 50; %>
-                        <div class="fill" style="width: <%= trofeosWidth %>%;"></div>
-                    </div>
 
                     <p class="player-estado">Estado: <%= player.estado %></p>
                 </div>
@@ -94,19 +86,6 @@
         <% }) %>
     </main>
     
-    <!-- Modal Login -->
-    <div id="adminLoginModal" class="modal">
-        <div class="modal-content">
-            <span class="close" id="closeAdminLogin">&times;</span>
-            <h2>🔑 Acceso Administrador</h2>
-            <form method="POST" action="/admin">
-                <input type="password" name="key" placeholder="Ingrese la clave" required 
-                        style="padding:10px; width:100%; margin:15px 0; border:none; border-radius:8px;">
-                <button type="submit" class="btn-admin">Entrar</button>
-            </form>
-        </div>
-    </div>
-
     <footer class="site-footer">
         <a href="https://bytech-technology.vercel.app/" target="_blank" class="footer-link">
             <img src="/icono.png" alt="Bytech Technology Logo" class="footer-logo">
