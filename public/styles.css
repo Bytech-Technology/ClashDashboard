@@ -11,9 +11,8 @@ body {
         linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)),
         url("/backgroun_2.jpg");
     background-repeat: no-repeat;
-    background-size: cover;
+    background-size: 100% 100%;
     color: #f0f0f0;
-    min-height: 100vh;
 }
 
 /* Header con logo + nombre + detalles */
