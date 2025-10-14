@@ -12,7 +12,6 @@ body {
         url("/backgroun_2.jpg");
     background-repeat: no-repeat;
     background-size: cover;
-    background-attachment: fixed;
     color: #f0f0f0;
     min-height: 100vh;
 }
